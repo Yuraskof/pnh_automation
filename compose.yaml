@@ -1,0 +1,7 @@
+﻿services:
+  pnh_automation:
+    image: pnh_automation
+    build:
+      context: .
+      dockerfile: Dockerfile
+
