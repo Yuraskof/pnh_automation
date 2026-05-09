@@ -18,12 +18,18 @@ pnh_automation/
   tests/
     PnhAutomation.Tests/
       Browser/
+        BrowserViewport.cs
+        BrowserViewports.cs
         PnhPageTest.cs
       Core/
         Configuration/
           AutomationSettingsTests.cs
+      Ui/
+        PublicHomeSmokeTests.cs
       PnhAutomation.Tests.csproj
   Directory.Build.props
+  config/
+    test-run.runsettings
   Dockerfile
   compose.yaml
   pnh_automation.sln
@@ -41,8 +47,11 @@ pnh_automation/
 | Type | Purpose |
 |---|---|
 | `AutomationSettings` | Holds the target base URL and environment name. Defaults to the public production URL and can read `PNH_BASE_URL` and `PNH_ENVIRONMENT` from the current process or an explicit dictionary. |
-| `TestCategories` | Central list of category names used by xUnit traits and `dotnet test --filter` commands. |
+| `TestCategories` | Central list of category names used by xUnit traits and `TestCaseFilter` values in `config/test-run.runsettings`. |
+| `BrowserViewport` | Named browser viewport value with width, height, and conversion helpers for Playwright context and video options. |
+| `BrowserViewports` | Shared viewport catalog. Current presets are `DesktopSmall` (`1280x720`) and `MobilePhone` (`390x844`). |
 | `PnhPageTest` | Shared Playwright xUnit base class for UI tests. It applies the configured base URL, starts tracing, captures a failure screenshot, and keeps browser video only when a test fails. |
+| `PublicHomeSmokeTests` | First production-safe UI smoke tests. They check homepage load, primary navigation availability, and desktop/mobile viewport fit. |
 
 Example:
 
@@ -58,21 +67,28 @@ public void AutomationSettings_CreatesProductionDefaults_UsesPublicBaseUrl()
 
 ## Configuration
 
-The first shared configuration values are:
+The project uses `config/test-run.runsettings` as the default XML test run configuration. Edit that file first, then run `dotnet test`.
 
-| Environment variable | Default | Purpose |
+The default filter runs unit tests plus production-safe read-only smoke tests:
+
+```xml
+<TestCaseFilter>(Category=Unit)|(Category=Smoke&amp;Category=ProductionSafe&amp;Category=ReadOnly)</TestCaseFilter>
+```
+
+The first shared configuration values are provided through `RunConfiguration/EnvironmentVariables` in the XML file:
+
+| XML environment variable | Default | Purpose |
 |---|---|---|
 | `PNH_BASE_URL` | `https://www.pilkanahali.pl/` | Target site URL. |
 | `PNH_ENVIRONMENT` | `Production` | Human-readable environment name used by tests and reports. |
 | `PNH_ARTIFACT_DIR` | `TestResults/playwright` | Optional folder for failed browser traces, screenshots, and videos. |
 
-PowerShell example:
+The same XML file also controls:
 
-```powershell
-$env:PNH_BASE_URL = "https://www.pilkanahali.pl/"
-$env:PNH_ENVIRONMENT = "Production"
-dotnet test
-```
+- `RunConfiguration/TestCaseFilter` for selecting which tests run.
+- `Playwright/BrowserName` for choosing `chromium`, `firefox`, or `webkit`.
+- `Playwright/LaunchOptions/Headless` for headless or visible browser execution.
+- `Playwright/LaunchOptions/Channel` for Chrome or Edge when using Chromium.
 
 ## Commands
 
@@ -82,31 +98,31 @@ Run from the repository root:
 dotnet restore
 dotnet build
 dotnet test
-dotnet test --filter "Category=Unit"
 ```
+
+Choose the active test set by editing `RunConfiguration/TestCaseFilter` in `config/test-run.runsettings`.
 
 Playwright browser setup:
 
 ```powershell
 dotnet build tests/PnhAutomation.Tests/PnhAutomation.Tests.csproj
-pwsh ./tests/PnhAutomation.Tests/bin/Debug/net10.0/playwright.ps1 install
+pwsh ./tests/PnhAutomation.Tests/bin/Debug/net10.0/playwright.ps1 install chrome
+```
+
+Windows PowerShell fallback:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\tests\PnhAutomation.Tests\bin\Debug\net10.0\playwright.ps1 install chrome
 ```
 
 Browser test commands:
 
 ```powershell
-$env:PNH_BASE_URL = "https://www.pilkanahali.pl/"
-dotnet test --filter "Category=Ui"
-dotnet test --filter "Category=Ui&Category=Smoke&Category=ProductionSafe"
+dotnet test
+dotnet test --settings .\config\test-run.runsettings
 ```
 
-Playwright run options:
-
-```powershell
-$env:HEADED = "1"
-$env:BROWSER = "chromium"
-dotnet test --filter "Category=Ui"
-```
+`config/test-run.runsettings` configures Chromium to launch through the Chrome channel by default because the public site can block Playwright's default headless shell. Change `Headless` to `false` in that file to watch browser execution.
 
 Failed browser tests write traces, screenshots, and video to `TestResults/playwright` unless `PNH_ARTIFACT_DIR` points somewhere else. Open a failed trace with:
 

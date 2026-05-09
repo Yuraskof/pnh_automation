@@ -48,30 +48,42 @@ Run from the repository root:
 dotnet restore
 dotnet build
 dotnet test
-dotnet test --filter "Category=Unit"
 dotnet build tests/PnhAutomation.Tests/PnhAutomation.Tests.csproj
-pwsh ./tests/PnhAutomation.Tests/bin/Debug/net10.0/playwright.ps1 install
-dotnet test --filter "Category=Ui"
+pwsh ./tests/PnhAutomation.Tests/bin/Debug/net10.0/playwright.ps1 install chrome
 docker compose build
 docker compose run --rm pnh_automation
 ```
 
-`docker compose run --rm pnh_automation` uses the repository Dockerfile and runs `dotnet test pnh_automation.sln --no-restore` inside the SDK container.
+By default, `dotnet test` runs unit tests plus production-safe read-only smoke tests:
 
-Browser tests use `PNH_BASE_URL`, which defaults to `https://www.pilkanahali.pl/`:
+```xml
+<TestCaseFilter>(Category=Unit)|(Category=Smoke&amp;Category=ProductionSafe&amp;Category=ReadOnly)</TestCaseFilter>
+```
+
+Choose a different suite, headed mode, or debug mode by editing `config/test-run.runsettings` before `dotnet test`.
+
+If `pwsh` is not installed on Windows, run the generated Playwright script with Windows PowerShell:
 
 ```powershell
-$env:PNH_BASE_URL = "https://www.pilkanahali.pl/"
-$env:BROWSER = "chromium"
-dotnet test --filter "Category=Ui&Category=ProductionSafe"
+powershell -ExecutionPolicy Bypass -File .\tests\PnhAutomation.Tests\bin\Debug\net10.0\playwright.ps1 install chrome
+```
+
+`docker compose run --rm pnh_automation` uses the repository Dockerfile and runs `dotnet test pnh_automation.sln --no-restore` inside the SDK container.
+
+Browser tests use `config/test-run.runsettings` for the target URL, browser, visible/headless mode, debug mode, and test filter. Edit that XML file first, then run:
+
+```powershell
+dotnet test
 ```
 
 Failed browser tests keep Playwright traces, screenshots, and videos under `TestResults/playwright` by default.
 
-Future production-safe test commands should use explicit filters, for example:
+The first UI smoke class is `PublicHomeSmokeTests`. It opens the public homepage, checks primary navigation availability, and verifies that desktop and mobile viewports do not overflow horizontally.
 
-```powershell
-dotnet test --filter "Category=ProductionSafe"
-dotnet test --filter "Category=Smoke&Category=ReadOnly"
-dotnet test --filter "Category=Regression"
+Future production-safe runs should use explicit filters in `config/test-run.runsettings`, for example:
+
+```xml
+<TestCaseFilter>Category=ProductionSafe</TestCaseFilter>
+<TestCaseFilter>Category=Smoke&amp;Category=ReadOnly</TestCaseFilter>
+<TestCaseFilter>Category=Regression</TestCaseFilter>
 ```

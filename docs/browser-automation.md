@@ -13,80 +13,99 @@ Run these commands from the repository root after restoring packages:
 ```powershell
 dotnet restore
 dotnet build tests/PnhAutomation.Tests/PnhAutomation.Tests.csproj
-pwsh ./tests/PnhAutomation.Tests/bin/Debug/net10.0/playwright.ps1 install
+pwsh ./tests/PnhAutomation.Tests/bin/Debug/net10.0/playwright.ps1 install chrome
+```
+
+If `pwsh` is not installed on Windows, use Windows PowerShell:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\tests\PnhAutomation.Tests\bin\Debug\net10.0\playwright.ps1 install chrome
 ```
 
 On a Linux CI runner or a fresh Linux machine, install Playwright system dependencies too:
 
 ```powershell
 dotnet build tests/PnhAutomation.Tests/PnhAutomation.Tests.csproj
-pwsh ./tests/PnhAutomation.Tests/bin/Debug/net10.0/playwright.ps1 install --with-deps
+pwsh ./tests/PnhAutomation.Tests/bin/Debug/net10.0/playwright.ps1 install --with-deps chrome
 ```
 
 The `dotnet build` step matters because Playwright creates `playwright.ps1` inside the test project's `bin` folder during build.
 
-## Base URL Config
+The project uses `config/test-run.runsettings` as the editable XML test run configuration. In simple words: choose the browser, visible/headless mode, target URL, debug mode, and test filter in that file, then run one command: `dotnet test`.
 
-Browser tests inherit the same base URL config as the rest of the framework:
+## XML Run Config
 
-| Environment variable | Default | Purpose |
-|---|---|---|
-| `PNH_BASE_URL` | `https://www.pilkanahali.pl/` | Site opened by Playwright when a test uses relative paths like `/`. |
-| `PNH_ENVIRONMENT` | `Production` | Human-readable environment name for reports and diagnostics. |
-| `PNH_ARTIFACT_DIR` | `TestResults/playwright` | Optional folder for failed browser traces, screenshots, and videos. |
+Edit this file before running tests:
 
-Example:
+```text
+config/test-run.runsettings
+```
 
-```powershell
-$env:PNH_BASE_URL = "https://www.pilkanahali.pl/"
-$env:PNH_ENVIRONMENT = "Production"
-$env:PNH_ARTIFACT_DIR = "D:\test-artifacts\pnh"
-dotnet test --filter "Category=Ui"
+All common choices are visible in XML comments. Keep one active value per setting.
+
+Important settings:
+
+| XML setting | Purpose |
+|---|---|
+| `RunConfiguration/TestCaseFilter` | Chooses which tests run. |
+| `RunConfiguration/EnvironmentVariables/PNH_BASE_URL` | Site opened by Playwright when a test uses relative paths like `/`. |
+| `RunConfiguration/EnvironmentVariables/PNH_ENVIRONMENT` | Human-readable environment name for reports and diagnostics. |
+| `RunConfiguration/EnvironmentVariables/PNH_ARTIFACT_DIR` | Optional folder for failed browser traces, screenshots, and videos. |
+| `RunConfiguration/EnvironmentVariables/PWDEBUG` | Opens Playwright Inspector when uncommented. |
+| `Playwright/BrowserName` | Chooses `chromium`, `firefox`, or `webkit`. |
+| `Playwright/LaunchOptions/Headless` | `true` runs in the background; `false` opens a visible browser. |
+| `Playwright/LaunchOptions/Channel` | Chooses Chrome or Edge when `BrowserName` is `chromium`. |
+
+Example: run homepage smoke tests in a visible Chrome window:
+
+```xml
+<TestCaseFilter>FullyQualifiedName~PublicHomeSmokeTests</TestCaseFilter>
+<BrowserName>chromium</BrowserName>
+<Headless>false</Headless>
+<Channel>chrome</Channel>
 ```
 
 If `PNH_BASE_URL` is changed to a staging site, make sure the test categories match the target. Tests that can change data must not run against production.
 
-## Run Browser Tests
+## Run Configured Tests
 
-Run all UI tests:
-
-```powershell
-dotnet test --filter "Category=Ui"
-```
-
-Run only production-safe UI smoke tests:
+After editing `config/test-run.runsettings`, run:
 
 ```powershell
-dotnet test --filter "Category=Ui&Category=Smoke&Category=ProductionSafe"
+dotnet test
 ```
 
-Run in a visible browser window:
+The default active filter runs unit tests and production-safe read-only smoke tests:
+
+```xml
+<TestCaseFilter>(Category=Unit)|(Category=Smoke&amp;Category=ProductionSafe&amp;Category=ReadOnly)</TestCaseFilter>
+```
+
+To run from an explicit settings file path:
 
 ```powershell
-$env:HEADED = "1"
-dotnet test --filter "Category=Ui"
+dotnet test --settings .\config\test-run.runsettings
 ```
 
-Run with a specific browser:
+Use these filter values inside `TestCaseFilter`:
 
-```powershell
-$env:BROWSER = "webkit"
-dotnet test --filter "Category=Ui"
-```
+| Goal | `TestCaseFilter` value |
+|---|---|
+| Unit tests | `Category=Unit` |
+| All UI tests | `Category=Ui` |
+| Production-safe UI smoke tests | `Category=Ui&Category=Smoke&Category=ProductionSafe` |
+| Homepage smoke class | `FullyQualifiedName~PublicHomeSmokeTests` |
 
-Debug with the Playwright inspector:
+In XML, `&` must be written as `&amp;`, so the production-safe smoke filter is stored as `Category=Ui&amp;Category=Smoke&amp;Category=ProductionSafe`.
 
-```powershell
-$env:PWDEBUG = "1"
-dotnet test --filter "Category=Ui"
-```
+In simple words: `Headless=false` lets you watch the browser, while uncommenting `PWDEBUG` opens Playwright's debugging tools so you can pause and inspect what the test sees.
 
 ## Test Base Class
 
 New browser tests should inherit `PnhPageTest`. The base class creates a Playwright context with:
 
 - `BaseURL` set from `PNH_BASE_URL`.
-- A stable `1280x720` viewport.
+- A stable desktop viewport from `BrowserViewports.DesktopSmall`.
 - Trace recording with screenshots, snapshots, and source files.
 - A full-page `failure.png` screenshot when the test fails.
 - Video recording during the test, kept only when the test fails.
@@ -115,6 +134,52 @@ public sealed class HomePageSmokeTests : PnhPageTest
     }
 }
 ```
+
+## Viewport Catalog
+
+Viewport presets live in `tests/PnhAutomation.Tests/Browser/BrowserViewports.cs`.
+
+Current presets:
+
+| Name | Size | Purpose |
+|---|---:|---|
+| `DesktopSmall` | `1280x720` | Default browser context and desktop smoke coverage. |
+| `MobilePhone` | `390x844` | Mobile smoke coverage. |
+
+In simple words: tests should use names like `BrowserViewports.DesktopSmall` instead of repeating raw numbers like `1280` and `720`. This keeps the intent clear and makes future viewport changes happen in one place.
+
+## Locator Preference
+
+Current UI tests should prefer relative XPath locators first, using stable and readable XPath expressions.
+
+Preferred order:
+
+1. Relative XPath using best practices.
+2. Stable test id, when the application provides one.
+3. CSS locator for stable technical structure.
+4. Role locator, for example `GetByRole(AriaRole.Link, ...)`.
+
+Good example:
+
+```csharp
+Page.Locator("//a[contains(translate(normalize-space(.), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'oferta')]")
+```
+
+Avoid brittle absolute XPath:
+
+```csharp
+Page.Locator("/html/body/div[1]/header/nav/a[3]")
+```
+
+## Current Homepage Smoke Coverage
+
+`PublicHomeSmokeTests` automates the first live-production UI checks:
+
+| Test | What it checks | Why it is safe |
+|---|---|---|
+| `AnonymousUser_OpensPublicHomePage_AppLoads` | The public homepage returns a successful response, is not the block page, has title `PNH`, and renders the hero heading. | It only opens the public page. |
+| `AnonymousUser_ViewsPublicHomePage_PrimaryNavigationIsAvailable` | The top navigation exposes links for finding classes, adding classes, offer, and how it works. | It checks link availability without submitting forms or changing data. |
+| `AnonymousUser_OpensPublicHomePage_LayoutFitsViewport` | The homepage fits desktop `1280x720` and mobile `390x844` viewports without horizontal overflow. | It only resizes the local browser viewport and reads page layout. |
 
 ## Failure Artifacts
 

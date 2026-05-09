@@ -47,19 +47,25 @@ Regression tests answer: "Did a change break expected behavior across the produc
 | `ProductionSafe` | Small subset approved for live production. | 1-5 minutes | Live production. | Read-only public checks, dedicated test account login/logout, pre-submit checks. | Anything that mutates real data or moves money. |
 | `NoProduction` | Tests that must not run against live production. | Any | Local, mocks, or staging. | Full booking, cancellation, payment, prepaid, organizer, notifications. | Live production execution. |
 
-## Suite Commands
+## Suite Selection
 
-These commands are the intended entry points once a test project and categories exist:
+Choose the active suite by editing `RunConfiguration/TestCaseFilter` in `config/test-run.runsettings`, then run:
 
 ```powershell
-dotnet test --filter "Category=Smoke"
-dotnet test --filter "Category=Regression"
-dotnet test --filter "Category=ProductionSafe"
-dotnet test --filter "Category=Smoke&Category=ReadOnly"
-dotnet test --filter "Category=NoProduction"
+dotnet test
 ```
 
-The `NoProduction` command is documented to make the boundary visible. It must be pointed at local, mocked, or staging environments, not live production.
+Common filter values:
+
+```xml
+<TestCaseFilter>Category=Smoke</TestCaseFilter>
+<TestCaseFilter>Category=Regression</TestCaseFilter>
+<TestCaseFilter>Category=ProductionSafe</TestCaseFilter>
+<TestCaseFilter>Category=Smoke&amp;Category=ReadOnly</TestCaseFilter>
+<TestCaseFilter>Category=NoProduction</TestCaseFilter>
+```
+
+The `NoProduction` filter is documented to make the boundary visible. It must be pointed at local, mocked, or staging environments, not live production.
 
 There are no new scripts or services in this documentation change. When scripts are added later, their run commands must be added to the README or a dedicated commands document.
 
@@ -225,7 +231,7 @@ TestUser_LogsOut_LoginEntryPointReturns
 
 Build coverage in this order:
 
-1. Public home page smoke.
+1. Public home page smoke. Implemented in `PublicHomeSmokeTests` with homepage load, primary navigation availability, and desktop/mobile viewport-fit checks.
 2. Public event catalog smoke.
 3. Event detail smoke.
 4. Dedicated test account login/logout smoke.

@@ -6,9 +6,6 @@ namespace PnhAutomation.Tests.Browser;
 
 public abstract class PnhPageTest : PageTest
 {
-    private const int ViewportWidth = 1280;
-    private const int ViewportHeight = 720;
-
     private readonly string _artifactName;
 
     protected PnhPageTest()
@@ -25,19 +22,12 @@ public abstract class PnhPageTest : PageTest
     public override BrowserNewContextOptions ContextOptions()
     {
         var options = base.ContextOptions();
+        var defaultViewport = BrowserViewports.DesktopSmall;
 
         options.BaseURL = Settings.BaseUrl.ToString();
-        options.ViewportSize = new ViewportSize
-        {
-            Width = ViewportWidth,
-            Height = ViewportHeight
-        };
+        options.ViewportSize = defaultViewport.ToViewportSize();
         options.RecordVideoDir = Path.Combine(ArtifactDirectory, "videos");
-        options.RecordVideoSize = new RecordVideoSize
-        {
-            Width = ViewportWidth,
-            Height = ViewportHeight
-        };
+        options.RecordVideoSize = defaultViewport.ToRecordVideoSize();
 
         return options;
     }
