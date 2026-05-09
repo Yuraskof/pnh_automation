@@ -13,13 +13,16 @@ This folder contains the working documentation for the PNH Automation project. I
 3. [Framework architecture](framework-architecture.md)
    Use this to understand the solution layout, shared core, test project, and Docker test runner.
 
-4. [Test strategy](test-strategy.md)
+4. [Browser automation](browser-automation.md)
+   Use this for Playwright browser install commands, browser test commands, base URL config, traces, screenshots, and video-on-failure behavior.
+
+5. [Test strategy](test-strategy.md)
    Use this to choose the right test level, suite, risk priority, and test name.
 
-5. [Branch rules](branch-rules.md)
+6. [Branch rules](branch-rules.md)
    Use this before starting a new change so branch names, commits, and reviews stay consistent.
 
-6. [Definition of Done](definition-of-done.md)
+7. [Definition of Done](definition-of-done.md)
    Use this before opening or finishing a PR-style change.
 
 ## Documentation Rules

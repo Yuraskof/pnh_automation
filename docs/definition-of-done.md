@@ -39,6 +39,13 @@ pwsh ./scripts/install-playwright.ps1
 
 If that script does not exist yet, the document must clearly say it is planned.
 
+For the current Playwright package path, document the generated install command like this:
+
+```powershell
+dotnet build tests/PnhAutomation.Tests/PnhAutomation.Tests.csproj
+pwsh ./tests/PnhAutomation.Tests/bin/Debug/net10.0/playwright.ps1 install
+```
+
 ## Test Automation Changes
 
 Automation code is done when:
@@ -107,4 +114,4 @@ docker compose build
 docker compose run --rm pnh_automation
 ```
 
-`dotnet test` is now the standard verification command. The current suite starts with shared core unit tests, and browser-specific commands will be added when Playwright is installed.
+`dotnet test` is the standard verification command. Browser-specific commands are documented in [Browser automation](browser-automation.md). Failed browser tests keep traces, screenshots, and videos under `TestResults/playwright` by default, and those artifacts must be reviewed for secrets or personal data before sharing.
