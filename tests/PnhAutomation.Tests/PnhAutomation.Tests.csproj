@@ -4,6 +4,7 @@
     <TargetFramework>net10.0</TargetFramework>
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
+    <RunSettingsFilePath>$(MSBuildProjectDirectory)/../../config/test-run.runsettings</RunSettingsFilePath>
   </PropertyGroup>
 
   <ItemGroup>

@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RunSettings>
+  <!--
+    Edit this file, then run:
+
+      dotnet test
+
+    Keep exactly one active value per setting. Copy one of the commented examples
+    into the active element when you want to change the current run.
+  -->
+
+  <RunConfiguration>
+    <!-- Test filter options:
+      <TestCaseFilter>(Category=Unit)|(Category=Smoke&amp;Category=ProductionSafe&amp;Category=ReadOnly)</TestCaseFilter>
+      <TestCaseFilter>Category=Unit</TestCaseFilter>
+      <TestCaseFilter>Category=Ui</TestCaseFilter>
+      <TestCaseFilter>Category=Ui&amp;Category=Smoke&amp;Category=ProductionSafe</TestCaseFilter>
+      <TestCaseFilter>FullyQualifiedName~PublicHomeSmokeTests</TestCaseFilter>
+    -->
+    <TestCaseFilter>(Category=Unit)|(Category=Smoke&amp;Category=ProductionSafe&amp;Category=ReadOnly)</TestCaseFilter>
+
+    <EnvironmentVariables>
+      <!-- Target URL options:
+        <PNH_BASE_URL>https://www.pilkanahali.pl/</PNH_BASE_URL>
+      -->
+      <PNH_BASE_URL>https://www.pilkanahali.pl/</PNH_BASE_URL>
+
+      <!-- Environment name options:
+        <PNH_ENVIRONMENT>Production</PNH_ENVIRONMENT>
+        <PNH_ENVIRONMENT>Staging</PNH_ENVIRONMENT>
+        <PNH_ENVIRONMENT>Local</PNH_ENVIRONMENT>
+      -->
+      <PNH_ENVIRONMENT>Production</PNH_ENVIRONMENT>
+
+      <!-- Artifact folder options:
+        <PNH_ARTIFACT_DIR>TestResults/playwright</PNH_ARTIFACT_DIR>
+        <PNH_ARTIFACT_DIR>D:\test-artifacts\pnh</PNH_ARTIFACT_DIR>
+      -->
+      <PNH_ARTIFACT_DIR>TestResults/playwright</PNH_ARTIFACT_DIR>
+
+      <!-- Debug options:
+        Uncomment PWDEBUG to open Playwright Inspector.
+        <PWDEBUG>1</PWDEBUG>
+
+        Uncomment DEBUG to print Playwright API logs.
+        <DEBUG>pw:api</DEBUG>
+      -->
+    </EnvironmentVariables>
+  </RunConfiguration>
+
+  <!-- xUnit options:
+    <xUnit>
+      <MaxParallelThreads>1</MaxParallelThreads>
+    </xUnit>
+  -->
+
+  <Playwright>
+    <!-- Browser options:
+      <BrowserName>chromium</BrowserName>
+      <BrowserName>firefox</BrowserName>
+      <BrowserName>webkit</BrowserName>
+    -->
+    <BrowserName>chromium</BrowserName>
+
+    <ExpectTimeout>5000</ExpectTimeout>
+
+    <LaunchOptions>
+      <!-- Browser window options:
+        <Headless>true</Headless>   Runs in background.
+        <Headless>false</Headless>  Opens a visible browser window.
+      -->
+      <Headless>true</Headless>
+
+      <!-- Chromium channel options:
+        Use only with BrowserName=chromium.
+        <Channel>chrome</Channel>
+        <Channel>msedge</Channel>
+      -->
+      <Channel>chrome</Channel>
+
+      <!-- Slow motion options:
+        Uncomment when you want to watch actions more slowly.
+        <SlowMo>250</SlowMo>
+      -->
+    </LaunchOptions>
+  </Playwright>
+</RunSettings>

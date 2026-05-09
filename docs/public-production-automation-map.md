@@ -166,12 +166,12 @@ Scenario: Payment route is protected by a production boundary
 
 This change adds documentation only. It does not add new scripts or services.
 
-When automation commands are added later, document each command beside the feature it runs. Production-safe examples should use an explicit production-safe filter, for example:
+When automation commands are added later, document each command beside the feature it runs. Production-safe examples should use an explicit production-safe `TestCaseFilter` in `config/test-run.runsettings`, for example:
 
-```powershell
-dotnet test --filter "Category=ProductionSafe"
-dotnet test --filter "Category=Smoke&Category=ReadOnly"
-dotnet test --filter "Category=NoProduction"
+```xml
+<TestCaseFilter>Category=ProductionSafe</TestCaseFilter>
+<TestCaseFilter>Category=Smoke&amp;Category=ReadOnly</TestCaseFilter>
+<TestCaseFilter>Category=NoProduction</TestCaseFilter>
 ```
 
-The `NoProduction` command is shown only to make the boundary visible. It must be used against staging, local, or mocked environments, not against live production.
+The `NoProduction` filter is shown only to make the boundary visible. It must be used against staging, local, or mocked environments, not against live production.

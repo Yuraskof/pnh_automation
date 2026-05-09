@@ -43,7 +43,7 @@ For the current Playwright package path, document the generated install command 
 
 ```powershell
 dotnet build tests/PnhAutomation.Tests/PnhAutomation.Tests.csproj
-pwsh ./tests/PnhAutomation.Tests/bin/Debug/net10.0/playwright.ps1 install
+pwsh ./tests/PnhAutomation.Tests/bin/Debug/net10.0/playwright.ps1 install chrome
 ```
 
 ## Test Automation Changes
@@ -51,7 +51,7 @@ pwsh ./tests/PnhAutomation.Tests/bin/Debug/net10.0/playwright.ps1 install
 Automation code is done when:
 
 - Tests have clear names that describe user behavior.
-- Tests use stable locators and avoid timing sleeps unless there is no better option.
+- Tests use stable locators, following the project preference for relative XPath first, and avoid timing sleeps unless there is no better option.
 - Assertions check business meaning, not only technical implementation details.
 - Test data comes from builders, fixtures, environment variables, or CI secrets.
 - Production-safe tests are tagged explicitly.
@@ -104,8 +104,9 @@ Run from the repository root:
 dotnet restore
 dotnet build
 dotnet test
-dotnet test --filter "Category=Unit"
 ```
+
+Select the active test set in `config/test-run.runsettings` before running `dotnet test`.
 
 For Docker:
 
@@ -114,4 +115,4 @@ docker compose build
 docker compose run --rm pnh_automation
 ```
 
-`dotnet test` is the standard verification command. Browser-specific commands are documented in [Browser automation](browser-automation.md). Failed browser tests keep traces, screenshots, and videos under `TestResults/playwright` by default, and those artifacts must be reviewed for secrets or personal data before sharing.
+`dotnet test` is the standard verification command. By default it runs unit tests plus production-safe read-only smoke tests through `config/test-run.runsettings`. Browser-specific commands are documented in [Browser automation](browser-automation.md). Failed browser tests keep traces, screenshots, and videos under `TestResults/playwright` by default, and those artifacts must be reviewed for secrets or personal data before sharing.
