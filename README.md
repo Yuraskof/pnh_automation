@@ -68,7 +68,7 @@ If `pwsh` is not installed on Windows, run the generated Playwright script with 
 powershell -ExecutionPolicy Bypass -File .\tests\PnhAutomation.Tests\bin\Debug\net10.0\playwright.ps1 install chrome
 ```
 
-`docker compose run --rm pnh_automation` uses the repository Dockerfile and runs `dotnet test pnh_automation.sln --no-restore` inside the SDK container.
+`docker compose run --rm pnh_automation` uses the repository Dockerfile and runs `dotnet test pnh_automation.sln --no-restore --no-build` inside a Playwright .NET container. The Docker image is pinned to the project Playwright version, installs the .NET 10 SDK when needed, and installs the Chrome browser channel used by `config/test-run.runsettings`.
 
 Browser tests use `config/test-run.runsettings` for the target URL, browser, visible/headless mode, debug mode, and test filter. Edit that XML file first, then run:
 

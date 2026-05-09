@@ -137,11 +137,13 @@ docker compose build
 docker compose run --rm pnh_automation
 ```
 
-The Docker service uses the root `Dockerfile`. It restores the solution during image build and runs:
+The Docker service uses the root `Dockerfile`. It is based on the official Playwright .NET image pinned to the test package version, installs the .NET 10 SDK if the base image does not already contain it, builds the test project, installs the Chrome browser channel, and runs:
 
 ```powershell
-dotnet test pnh_automation.sln --no-restore
+dotnet test pnh_automation.sln --no-restore --no-build
 ```
+
+`compose.yaml` sets `ipc: host`, which is the recommended Chromium setting for Playwright containers because it reduces browser crashes caused by limited shared memory.
 
 ## Next Architecture Steps
 

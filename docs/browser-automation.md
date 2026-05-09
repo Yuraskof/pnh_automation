@@ -100,6 +100,19 @@ In XML, `&` must be written as `&amp;`, so the production-safe smoke filter is s
 
 In simple words: `Headless=false` lets you watch the browser, while uncommenting `PWDEBUG` opens Playwright's debugging tools so you can pause and inspect what the test sees.
 
+## Docker Browser Runner
+
+Docker uses the repository `Dockerfile` and `compose.yaml`:
+
+```powershell
+docker compose build
+docker compose run --rm pnh_automation
+```
+
+The Dockerfile starts from the official Playwright .NET image for the same Playwright version used by the test project. That image contains Playwright browser dependencies. The Docker build also installs the .NET 10 SDK when needed and installs the Chrome browser channel used by the runsettings file.
+
+In simple words: Docker should behave like a clean machine that already knows how to launch browsers for Playwright tests.
+
 ## Test Base Class
 
 New browser tests should inherit `PnhPageTest`. The base class creates a Playwright context with:
