@@ -30,8 +30,12 @@ pnh_automation/
   Directory.Build.props
   config/
     test-run.runsettings
+    test-run.docker-debug.runsettings
+  scripts/
+    docker-debug-entrypoint.sh
   Dockerfile
   compose.yaml
+  compose.debug.yaml
   pnh_automation.sln
 ```
 
@@ -144,6 +148,26 @@ dotnet test pnh_automation.sln --no-restore --no-build
 ```
 
 `compose.yaml` sets `ipc: host`, which is the recommended Chromium setting for Playwright containers because it reduces browser crashes caused by limited shared memory.
+
+Docker visual debug profile:
+
+```powershell
+docker compose -f compose.yaml -f compose.debug.yaml --profile debug up --build pnh_automation_debug
+```
+
+Open the browser view at:
+
+```text
+http://localhost:6080/vnc.html?autoconnect=1&resize=scale
+```
+
+The debug profile builds the `debug` Docker target, starts Xvfb, Fluxbox, x11vnc, and noVNC, then runs tests with:
+
+```powershell
+dotnet test pnh_automation.sln --no-restore --no-build --settings config/test-run.docker-debug.runsettings
+```
+
+Use the debug profile when you need to watch headed Chrome inside Docker. Use the normal `pnh_automation` service for repeatable headless local or CI-style runs.
 
 ## Next Architecture Steps
 

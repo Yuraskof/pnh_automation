@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RunSettings>
+  <!--
+    Docker visual debug settings.
+
+    This file intentionally omits RunConfiguration/TestCaseFilter so the Docker
+    debug service can choose a default command and callers can override it.
+  -->
+
+  <RunConfiguration>
+    <EnvironmentVariables>
+      <PNH_BASE_URL>https://www.pilkanahali.pl/</PNH_BASE_URL>
+      <PNH_ENVIRONMENT>Production-Docker-Debug</PNH_ENVIRONMENT>
+      <PNH_ARTIFACT_DIR>/src/TestResults/playwright</PNH_ARTIFACT_DIR>
+    </EnvironmentVariables>
+  </RunConfiguration>
+
+  <xUnit>
+    <MaxParallelThreads>1</MaxParallelThreads>
+  </xUnit>
+
+  <Playwright>
+    <BrowserName>chromium</BrowserName>
+    <ExpectTimeout>10000</ExpectTimeout>
+    <LaunchOptions>
+      <Headless>false</Headless>
+      <Channel>chrome</Channel>
+      <SlowMo>250</SlowMo>
+    </LaunchOptions>
+  </Playwright>
+</RunSettings>

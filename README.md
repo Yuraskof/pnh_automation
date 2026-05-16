@@ -17,6 +17,8 @@ pnh_automation/
   docs/                           project documentation and test strategy
   Dockerfile                      containerized test runner
   compose.yaml                    Docker Compose service definition
+  compose.debug.yaml              Docker Compose visual debug profile
+  scripts/                        helper scripts for Docker/debug workflows
   PLAN.md                         implementation roadmap notes
   README.md                       project entry point
 ```
@@ -52,6 +54,7 @@ dotnet build tests/PnhAutomation.Tests/PnhAutomation.Tests.csproj
 pwsh ./tests/PnhAutomation.Tests/bin/Debug/net10.0/playwright.ps1 install chrome
 docker compose build
 docker compose run --rm pnh_automation
+docker compose -f compose.yaml -f compose.debug.yaml --profile debug up --build pnh_automation_debug
 ```
 
 By default, `dotnet test` runs unit tests plus production-safe read-only smoke tests:
@@ -69,6 +72,20 @@ powershell -ExecutionPolicy Bypass -File .\tests\PnhAutomation.Tests\bin\Debug\n
 ```
 
 `docker compose run --rm pnh_automation` uses the repository Dockerfile and runs `dotnet test pnh_automation.sln --no-restore --no-build` inside a Playwright .NET container. The Docker image is pinned to the project Playwright version, installs the .NET 10 SDK when needed, and installs the Chrome browser channel used by `config/test-run.runsettings`.
+
+`compose.debug.yaml` adds a separate visual Docker debug profile. It runs headed Chrome inside a virtual Linux display and exposes noVNC at:
+
+```text
+http://localhost:6080/vnc.html?autoconnect=1&resize=scale
+```
+
+Run it with:
+
+```powershell
+docker compose -f compose.yaml -f compose.debug.yaml --profile debug up --build pnh_automation_debug
+```
+
+The debug profile keeps browser artifacts under `TestResults` by mounting the host folder into the container.
 
 Browser tests use `config/test-run.runsettings` for the target URL, browser, visible/headless mode, debug mode, and test filter. Edit that XML file first, then run:
 

@@ -23,3 +23,46 @@ RUN dotnet build "tests/PnhAutomation.Tests/PnhAutomation.Tests.csproj" --no-res
     && pwsh ./tests/PnhAutomation.Tests/bin/Debug/net10.0/playwright.ps1 install chrome
 
 ENTRYPOINT ["dotnet", "test", "pnh_automation.sln", "--no-restore", "--no-build"]
+
+FROM test AS debug
+
+RUN set -eux; \
+    sed -i \
+        -e 's|http://archive.ubuntu.com/ubuntu|https://archive.ubuntu.com/ubuntu|g' \
+        -e 's|http://security.ubuntu.com/ubuntu|https://security.ubuntu.com/ubuntu|g' \
+        /etc/apt/sources.list /etc/apt/sources.list.d/*.sources 2>/dev/null || true; \
+    apt-get \
+        -o Acquire::Retries=5 \
+        -o Acquire::http::Timeout=60 \
+        -o Acquire::https::Timeout=60 \
+        -o Acquire::http::Pipeline-Depth=0 \
+        update; \
+    apt-get \
+        -o Acquire::Retries=5 \
+        -o Acquire::http::Timeout=60 \
+        -o Acquire::https::Timeout=60 \
+        -o Acquire::http::Pipeline-Depth=0 \
+        install -y --no-install-recommends \
+        fluxbox \
+        novnc \
+        websockify \
+        x11vnc \
+        xvfb; \
+    rm -rf /var/lib/apt/lists/*
+
+COPY ["scripts/docker-debug-entrypoint.sh", "/usr/local/bin/pnh-docker-debug-entrypoint"]
+
+RUN chmod +x /usr/local/bin/pnh-docker-debug-entrypoint
+
+ENV DISPLAY=:99 \
+    NOVNC_PORT=6080 \
+    PNH_ARTIFACT_DIR=/src/TestResults/playwright \
+    SCREEN_GEOMETRY=1440x1000x24 \
+    VNC_PORT=5900
+
+EXPOSE 6080 5900
+
+ENTRYPOINT ["pnh-docker-debug-entrypoint"]
+CMD ["--filter", "FullyQualifiedName~PublicHomeSmokeTests", "--logger", "console;verbosity=detailed"]
+
+FROM test AS default

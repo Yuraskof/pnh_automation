@@ -113,6 +113,116 @@ The Dockerfile starts from the official Playwright .NET image for the same Playw
 
 In simple words: Docker should behave like a clean machine that already knows how to launch browsers for Playwright tests.
 
+The normal Docker service builds the `test` target and runs headless tests. The debug service builds the `debug` target only when requested.
+
+Use plain build logs when diagnosing the image build:
+
+```powershell
+docker compose build --progress=plain
+```
+
+Pass normal `dotnet test` arguments after the service name:
+
+```powershell
+docker compose run --rm pnh_automation --filter "Category=Unit"
+docker compose run --rm pnh_automation --filter "FullyQualifiedName~PublicHomeSmokeTests"
+docker compose run --rm pnh_automation --logger "console;verbosity=detailed"
+```
+
+Show Playwright API activity in the Docker console:
+
+```powershell
+docker compose run --rm -e DEBUG=pw:api pnh_automation --filter "FullyQualifiedName~PublicHomeSmokeTests" --logger "console;verbosity=detailed"
+```
+
+Keep failed-test artifacts on the host by mounting `TestResults` into the container:
+
+```powershell
+docker compose run --rm -v "${PWD}\TestResults:/src/TestResults" pnh_automation
+```
+
+Docker runs browser tests headlessly by default. A normal browser window will not appear on the host for the standard `pnh_automation` service. Use the debug profile below when you need a visible browser view from Docker.
+
+## Docker Debug Profile
+
+The Docker debug profile is for visual observation. It starts:
+
+- Xvfb as a virtual Linux display.
+- Fluxbox as a small window manager.
+- x11vnc as a VNC server.
+- noVNC as a browser-based viewer at `http://localhost:6080`.
+- Playwright in headed Chrome mode with slow motion and detailed logs.
+
+In simple words: the container gets its own virtual monitor, and your normal browser can look at that monitor through noVNC.
+
+Files involved:
+
+```text
+compose.debug.yaml
+config/test-run.docker-debug.runsettings
+scripts/docker-debug-entrypoint.sh
+```
+
+Build and run the debug profile:
+
+```powershell
+docker compose -f compose.yaml -f compose.debug.yaml --profile debug up --build pnh_automation_debug
+```
+
+Then open:
+
+```text
+http://localhost:6080/vnc.html?autoconnect=1&resize=scale
+```
+
+The debug profile mounts host artifacts automatically:
+
+```text
+./TestResults -> /src/TestResults
+```
+
+Run a different filter through the debug profile:
+
+```powershell
+docker compose -f compose.yaml -f compose.debug.yaml --profile debug run --rm --service-ports pnh_automation_debug --filter "Category=Ui" --logger "console;verbosity=detailed"
+```
+
+Keep noVNC open after the test process finishes:
+
+```powershell
+$env:PNH_DEBUG_HOLD_OPEN = "1"
+docker compose -f compose.yaml -f compose.debug.yaml --profile debug up --build pnh_automation_debug
+Remove-Item Env:\PNH_DEBUG_HOLD_OPEN -ErrorAction SilentlyContinue
+```
+
+Override the virtual screen size:
+
+```powershell
+$env:SCREEN_GEOMETRY = "1920x1080x24"
+docker compose -f compose.yaml -f compose.debug.yaml --profile debug up --build pnh_automation_debug
+Remove-Item Env:\SCREEN_GEOMETRY -ErrorAction SilentlyContinue
+```
+
+Stop and remove the debug containers:
+
+```powershell
+docker compose -f compose.yaml -f compose.debug.yaml --profile debug down
+```
+
+If the debug image fails while installing Ubuntu packages, retry with a clean debug build:
+
+```powershell
+docker compose -f compose.yaml -f compose.debug.yaml --profile debug build --no-cache pnh_automation_debug
+```
+
+For detailed build logs:
+
+```powershell
+docker compose -f compose.yaml -f compose.debug.yaml --profile debug build --progress=plain pnh_automation_debug
+```
+
+This failure usually means `apt-get` could not download one of the noVNC/VNC dependencies from the Ubuntu mirror. It is separate from test execution. The Dockerfile uses HTTPS Ubuntu mirrors, retries, and longer timeouts to reduce this risk.
+
 ## Test Base Class
 
 New browser tests should inherit `PnhPageTest`. The base class creates a Playwright context with:

@@ -1,0 +1,27 @@
+services:
+  pnh_automation_debug:
+    profiles:
+      - debug
+    image: pnh_automation_debug
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: debug
+    ipc: host
+    shm_size: 2gb
+    environment:
+      DEBUG: ${PNH_PLAYWRIGHT_DEBUG:-pw:api}
+      DISPLAY: :99
+      PNH_ARTIFACT_DIR: /src/TestResults/playwright
+      PNH_DEBUG_HOLD_OPEN: ${PNH_DEBUG_HOLD_OPEN:-0}
+      SCREEN_GEOMETRY: ${SCREEN_GEOMETRY:-1440x1000x24}
+    ports:
+      - "6080:6080"
+      - "5900:5900"
+    volumes:
+      - ./TestResults:/src/TestResults
+    command:
+      - "--filter"
+      - "FullyQualifiedName~PublicHomeSmokeTests"
+      - "--logger"
+      - "console;verbosity=detailed"
